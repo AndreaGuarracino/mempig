@@ -1,10 +1,10 @@
-# mempi
-MEM Pangenome Injection
+# mempig
+MEM Pangenome Injection Genotyping
 
 ## Paths
 
 ```shell
-DIR_BASE=/lizardfs/guarracinom/mem_injection
+DIR_BASE=/scratch/small_test_output
 ```
 
 ## Tools
@@ -31,7 +31,7 @@ go mod init cosigt && go mod tidy && go build cosigt
 #Add 'export PATH="/lizardfs/guarracino/git/cosigt:$PATH"' to ~/.zshrc
 ```
 
-Create a `conda` environment for `cosigt` with all its dependencies:
+Create a `conda` environment for `cosigt` with all its dependencies but R:
 
 ```shell
 conda create --prefix /lizardfs/guarracino/condatools/cosigt -c conda-forge -c bioconda -c anaconda -c vikky34v snakemake=7.32.4 cookiecutter=2.6.0 bwa-mem2=2.2.1 megadepth samtools=1.21 bedtools=2.31.1 python=3.9 pyyaml=6.0.2 pandas -y #r-base r-rjson=0.2.23 r-reshape2=1.4.4 r-nbclust=3.0.1 r-data.table r-ggplot2=3.5.1 r-dendextend=1.18.1 r-gggenes=0.5.1 bioconductor-rtracklayer time -y
@@ -47,6 +47,7 @@ git clone https://github.com/lh3/ropebwt3
 cd ropebwt3
 git checkout f77e399634456f6c0d3194a9c146878d79ab34c3
 make
+#Add 'export PATH="/lizardfs/guarracino/git/ropebwt3:$PATH"' to ~/.zshrc
 ```
 
 ### MONI (not fully functional)
@@ -68,4 +69,15 @@ conda create --prefix /lizardfs/guarracino/condatools/moni/0.2.2 -c conda-forge 
 # wget https://github.com/maxrossi91/moni/releases/download/v0.2.2/moni-0.2.2-Linux.tar.gz
 # tar -xzvf moni-0.2.2-Linux.tar.gz && rm moni-0.2.2-Linux.tar.gz
 # mv moni-0.2.2-Linux moni-0.2.2
+```
+
+## Data
+
+```shell
+cd $DIR_BASE/cram
+wget https://ftp-trace.ncbi.nlm.nih.gov/1000genomes/ftp/1000G_2504_high_coverage/additional_698_related/1000G_698_related_high_coverage.sequence.index
+
+grep -Ff <(cat $DIR_BASE/impg/extracted.fasta.fai | cut -f 1 -d '#' | sort | uniq) $DIR_BASE/cram/1000G_698_related_high_coverage.sequence.index | cut -f 1  > $DIR_BASE/cram/to_download.txt
+wget -i $DIR_BASE/cram/to_download.txt
+ls $DIR_BASE/cram/*.cram | while read CRAM; do samtools index $CRAM; done
 ```
