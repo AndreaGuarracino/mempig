@@ -98,3 +98,45 @@ ropebwt3 ssa -o $DIR_BASE/ropebwt3/extracted.fmd.ssa -s8 -t 1 $DIR_BASE/extracte
 # Sequence lengths
 seqtk comp $DIR_BASE/impg/extracted.fasta | cut -f1,2 | gzip > $DIR_BASE/ropebwt3/extracted.fmd.len.gz
 ```
+
+Test with 39 samples on the C4 region from HPRCy1 pangenome:
+
+```shell
+cd $DIR_BASE/ropebwt3
+
+ROI_BED=$DIR_BASE/roi/roi.bed
+REFERENCE_CRAM_FASTA=$DIR_BASE/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa
+
+cd $DIR_BASE/ropebwt3/
+ls $DIR_BASE/cram/*.final.cram | while read READS_CRAM; do
+    NAME=$(basename $READS_CRAM)
+
+    INPUT_READ=$DIR_BASE/$NAME.roi.fa.gz
+    samtools view -T $REFERENCE_CRAM_FASTA -@ 16 -L $ROI_BED -M -b $READS_CRAM | samtools fasta -@ 24 - | gzip > $INPUT_READ
+    echo $READS_CRAM $INPUT_READ
+    for l in `seq 9 60`; do
+        for p in `seq 1 50`; do
+            ropebwt3 mem -l $l $DIR_BASE/ropebwt3/extracted.fmd $INPUT_READ -p $p -t 24 > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv
+
+            python3 $DIR_BASE/ropebwt3-to-paf.py $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv <(cut -f 1,2 $DIR_BASE/impg/extracted.fasta.fai) $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf
+
+            gfainject --gfa $DIR_BASE/odgi/graph.gfa --paf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf
+
+            gafpack \
+                -g $DIR_BASE/odgi/graph.gfa \
+                -a $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf \
+                --len-scale | \
+                gzip > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz
+
+            /scratch/cosigt/cosigt -p $DIR_BASE/odgi/paths_matrix.tsv.gz -g $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz -o $DIR_BASE/ropebwt3/ #-i $NAME
+
+            cp $DIR_BASE/ropebwt3/cosigt_genotype.tsv $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv
+            cp $DIR_BASE/ropebwt3/sorted_combos.tsv $DIR_BASE/ropebwt3/$NAME.sorted_combos.l$l.p$p.tsv
+
+            grep '^#' -v $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv | awk -v OFS='\t' -v name=$NAME -v l=$l -v p=$p '{print(name,l,p,$0)}'
+
+            rm $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz
+        done
+    done
+done > $DIR_BASE/ropebwt3/C4.test.tsv
+```
