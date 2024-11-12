@@ -81,3 +81,20 @@ grep -Ff <(cat $DIR_BASE/impg/extracted.fasta.fai | cut -f 1 -d '#' | sort | uni
 wget -i $DIR_BASE/cram/to_download.txt
 ls $DIR_BASE/cram/*.cram | while read CRAM; do samtools index $CRAM; done
 ```
+
+## MEM Pangenome Injection Genotyping
+
+Build indexes:
+
+```shell
+mkdir -p $DIR_BASE/ropebwt3
+
+# Construct a BWT for both strands of the input sequences
+ropebwt3 build $DIR_BASE/impg/extracted.fasta -do $DIR_BASE/ropebwt3/extracted.fmd
+
+# Sampled suffix array
+ropebwt3 ssa -o $DIR_BASE/ropebwt3/extracted.fmd.ssa -s8 -t 1 $DIR_BASE/extracted.fmd
+
+# Sequence lengths
+seqtk comp $DIR_BASE/impg/extracted.fasta | cut -f1,2 | gzip > $DIR_BASE/ropebwt3/extracted.fmd.len.gz
+```
