@@ -113,7 +113,7 @@ ls $DIR_BASE/cram/*.final.cram | while read READS_CRAM; do
 
     INPUT_READ=$DIR_BASE/$NAME.roi.fa.gz
     samtools view -T $REFERENCE_CRAM_FASTA -@ 16 -L $ROI_BED -M -b $READS_CRAM | samtools fasta -@ 24 - | gzip > $INPUT_READ
-    echo $READS_CRAM $INPUT_READ
+    # echo $READS_CRAM $INPUT_READ
     for l in `seq 9 60`; do
         for p in `seq 1 50`; do
             ropebwt3 mem -l $l $DIR_BASE/ropebwt3/extracted.fmd $INPUT_READ -p $p -t 24 > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv
@@ -133,7 +133,7 @@ ls $DIR_BASE/cram/*.final.cram | while read READS_CRAM; do
             cp $DIR_BASE/ropebwt3/cosigt_genotype.tsv $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv
             cp $DIR_BASE/ropebwt3/sorted_combos.tsv $DIR_BASE/ropebwt3/$NAME.sorted_combos.l$l.p$p.tsv
 
-            grep '^#' -v $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv | awk -v OFS='\t' -v name=$NAME -v l=$l -v p=$p '{print(name,l,p,$0)}'
+            grep $NAME $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv | awk -v OFS='\t' -v name=$NAME -v l=$l -v p=$p '{print(name,l,p,$0)}'
 
             rm $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz
         done
