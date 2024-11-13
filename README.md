@@ -4,7 +4,7 @@ MEM Pangenome Injection Genotyping
 ## Paths
 
 ```shell
-DIR_BASE=/scratch/small_test_output
+DIR_BASE=/lizardfs/guarracino/mempig
 ```
 
 ## Tools
@@ -87,56 +87,50 @@ ls $DIR_BASE/cram/*.cram | while read CRAM; do samtools index $CRAM; done
 Build indexes:
 
 ```shell
-mkdir -p $DIR_BASE/ropebwt3
+mkdir -p $DIR_BASE/ropebwt3/indexes
 
 # Construct a BWT for both strands of the input sequences
-ropebwt3 build $DIR_BASE/impg/extracted.fasta -do $DIR_BASE/ropebwt3/extracted.fmd
+ropebwt3 build $DIR_BASE/impg/extracted.fasta -do $DIR_BASE/ropebwt3/indexes/extracted.fmd
 
 # Sampled suffix array
-ropebwt3 ssa -o $DIR_BASE/ropebwt3/extracted.fmd.ssa -s8 -t 1 $DIR_BASE/extracted.fmd
+ropebwt3 ssa -o $DIR_BASE/ropebwt3/indexes/extracted.fmd.ssa -s8 -t 1 $DIR_BASE/indexes/extracted.fmd
 
 # Sequence lengths
-seqtk comp $DIR_BASE/impg/extracted.fasta | cut -f1,2 | gzip > $DIR_BASE/ropebwt3/extracted.fmd.len.gz
+seqtk comp $DIR_BASE/impg/extracted.fasta | cut -f1,2 | gzip > $DIR_BASE/ropebwt3/indexes/extracted.fmd.len.gz
 ```
 
-Test with 39 samples on the C4 region from HPRCy1 pangenome:
+`mempig` with 39 samples on the C4 region from HPRCy1 pangenome:
 
 ```shell
-cd $DIR_BASE/ropebwt3
+# Prepare clusters (mandatori for cosigt > v0.1.0)
+Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $DIR_BASE/odgi/chopped.similarity.tsv $DIR_BASE/odgi/chopped.similarity.clusters.json
 
 ROI_BED=$DIR_BASE/roi/roi.bed
 REFERENCE_CRAM_FASTA=$DIR_BASE/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa
 
+mkdir -p $DIR_BASE/reads
 cd $DIR_BASE/ropebwt3/
 ls $DIR_BASE/cram/*.final.cram | while read READS_CRAM; do
-    NAME=$(basename $READS_CRAM)
+    NAME=$(basename $READS_CRAM .final.cram)
+    echo $READS_CRAM $INPUT_READ
 
-    INPUT_READ=$DIR_BASE/$NAME.roi.fa.gz
-    samtools view -T $REFERENCE_CRAM_FASTA -@ 16 -L $ROI_BED -M -b $READS_CRAM | samtools fasta -@ 24 - | gzip > $INPUT_READ
-    # echo $READS_CRAM $INPUT_READ
-    for l in `seq 9 60`; do
-        for p in `seq 1 50`; do
-            ropebwt3 mem -l $l $DIR_BASE/ropebwt3/extracted.fmd $INPUT_READ -p $p -t 24 > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv
-
-            python3 $DIR_BASE/ropebwt3-to-paf.py $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv <(cut -f 1,2 $DIR_BASE/impg/extracted.fasta.fai) $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf
-
-            gfainject --gfa $DIR_BASE/odgi/graph.gfa --paf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf
-
-            gafpack \
-                -g $DIR_BASE/odgi/graph.gfa \
-                -a $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf \
-                --len-scale | \
-                gzip > $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz
-
-            /scratch/cosigt/cosigt -p $DIR_BASE/odgi/paths_matrix.tsv.gz -g $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz -o $DIR_BASE/ropebwt3/ #-i $NAME
-
-            cp $DIR_BASE/ropebwt3/cosigt_genotype.tsv $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv
-            cp $DIR_BASE/ropebwt3/sorted_combos.tsv $DIR_BASE/ropebwt3/$NAME.sorted_combos.l$l.p$p.tsv
-
-            grep $NAME $DIR_BASE/ropebwt3/$NAME.cosigt_genotype.l$l.p$p.tsv | awk -v OFS='\t' -v name=$NAME -v l=$l -v p=$p '{print(name,l,p,$0)}'
-
-            rm $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.tsv $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.paf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gaf $DIR_BASE/ropebwt3/$NAME-vs-extracted.mem.l$l.p$p.gafpack.gz
-        done
+    INPUT_READ=$DIR_BASE/reads/$NAME.roi.fa.gz
+    samtools view -T $REFERENCE_CRAM_FASTA -@ 16 -L $ROI_BED -M -b $READS_CRAM | samtools fasta -@ 24 - | bgzip -l 9 -@ 8 > $INPUT_READ
+    for l in `seq 5 100`; do
+        sbatch -c 8 -p tux --job-name "${NAME}-l${l}" $DIR_BASE/scripts/run_ropebwt3.sh "$DIR_BASE" "$NAME" "$INPUT_READ" "$l"
     done
+done
+```
+
+Collect results:
+
+```shell
+find $DIR_BASE/ropebwt3/ -name "cosigt_genotype.*.l*.p*.tsv" | while read TSV; do
+    NAME=$(basename $TSV .tsv | cut -f 2 -d '.')
+    l=$(basename $TSV .tsv | cut -f 3 -d '.' | sed 's/l//g')
+    p=$(basename $TSV .tsv | cut -f 4 -d '.' | sed 's/p//g')
+    echo $TSV $NAME $l $p
+
+    grep '^#' -v $TSV | awk -v OFS='\t' -v name=$NAME -v l=$l -v p=$p '{print(name,l,p,$0)}' > $DIR_BASE/ropebwt3/C4.test.tsv
 done > $DIR_BASE/ropebwt3/C4.test.tsv
 ```
