@@ -20,7 +20,7 @@ for p in $(seq 1 50); do
     
     gfainject --gfa "$DIR_BASE/odgi/graph.gfa" --paf "${NAME}-vs-extracted.mem.l${L}.p${p}.paf" > "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf"
     
-    gafpack -g "$DIR_BASE/odgi/graph.gfa" -a "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf" --len-scale | pigz -9 -p 8 > "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz"
+    gafpack -g "$DIR_BASE/odgi/graph.gfa" -a "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf" --len-scale --weight-queries | pigz -9 -p 8 > "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz"
     
     cosigt -p "$DIR_BASE/odgi/paths_matrix.tsv.gz" -g "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz" -o . -i "$NAME" -c "$DIR_BASE/odgi/chopped.similarity.clusters.json"
     

@@ -99,10 +99,10 @@ ropebwt3 ssa -o $DIR_BASE/ropebwt3/indexes/extracted.fmd.ssa -s8 -t 1 $DIR_BASE/
 seqtk comp $DIR_BASE/impg/extracted.fasta | cut -f1,2 | gzip > $DIR_BASE/ropebwt3/indexes/extracted.fmd.len.gz
 ```
 
-`mempig` with 39 samples on the C4 region from HPRCy1 pangenome:
+## `mempig` with 39 samples on the C4 region from HPRCy1 pangenome
 
 ```shell
-# Prepare clusters (mandatori for cosigt > v0.1.0)
+# Prepare clusters (they are mandatory for cosigt > v0.1.0)
 Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $DIR_BASE/odgi/chopped.similarity.tsv $DIR_BASE/odgi/chopped.similarity.clusters.json
 
 ROI_BED=$DIR_BASE/roi/roi.bed
@@ -120,17 +120,21 @@ ls $DIR_BASE/cram/*.final.cram | while read READS_CRAM; do
         sbatch -c 8 -p tux --job-name "${NAME}-l${l}" $DIR_BASE/scripts/run_ropebwt3.sh "$DIR_BASE" "$NAME" "$INPUT_READ" "$l"
     done
 done
+
+# To check that everything went well
+grep skipping slurm-** -c | cut -f 2 -d ':' | uniq -c
+#   3744 0
 ```
 
 Collect results:
 
 ```shell
+(echo -n "l p " | tr ' ' '\t'; find $DIR_BASE/ropebwt3/ -name "cosigt_genotype.*.l*.p*.tsv" -exec head -n 1 {} \; -quit | sed 's/#//g') > $DIR_BASE/ropebwt3/C4.test.tsv
 find $DIR_BASE/ropebwt3/ -name "cosigt_genotype.*.l*.p*.tsv" | while read TSV; do
-    NAME=$(basename $TSV .tsv | cut -f 2 -d '.')
     l=$(basename $TSV .tsv | cut -f 3 -d '.' | sed 's/l//g')
     p=$(basename $TSV .tsv | cut -f 4 -d '.' | sed 's/p//g')
-    echo $TSV $NAME $l $p
+   # echo $TSV $NAME $l $p
 
-    grep '^#' -v $TSV | awk -v OFS='\t' -v name=$NAME -v l=$l -v p=$p '{print(name,l,p,$0)}' > $DIR_BASE/ropebwt3/C4.test.tsv
-done > $DIR_BASE/ropebwt3/C4.test.tsv
+    grep '^#' -v $TSV | awk -v OFS='\t' -v l=$l -v p=$p '{print(l,p,$0)}'
+done | sort -k 1,1 -k 2,2n -k 3,3n -T /scratch >> $DIR_BASE/ropebwt3/C4.test.tsv
 ```
