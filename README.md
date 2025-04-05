@@ -73,6 +73,16 @@ conda create --prefix /lizardfs/guarracino/condatools/moni/0.2.2 -c conda-forge 
 
 ## Data
 
+### HGSVC3
+
+```shell
+cd /scratch
+ls /lizardfs/guarracino/pangenomes/HGSVC3/*.fa.gz | rev | cut -f 1 -d '/' | rev | cut -f 1 -d '.' | while read SAMPLE; do URL=$(cat $DIR_BASE/data/1000G_*.index | grep $SAMPLE -m 1 | cut -f 1); echo $URL; wget -c $URL; wget -c $URL.crai; done
+mv *.cram* $DIR_BASE/cram
+```
+
+### 39 samples
+
 ```shell
 cd $DIR_BASE/cram
 wget https://ftp-trace.ncbi.nlm.nih.gov/1000genomes/ftp/1000G_2504_high_coverage/additional_698_related/1000G_698_related_high_coverage.sequence.index
