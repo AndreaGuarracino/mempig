@@ -1,7 +1,7 @@
 library(tidyverse)
 
 # Read the data
-data <- read.table("/home/guarracino/Desktop/C4.test.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE, comment.char = '?')
+data <- read.table("/home/guarracino/Desktop/C4.test.new-gafpack.tsv", header=TRUE, sep="\t", stringsAsFactors=FALSE, comment.char = '?')
 
 results <- data %>%
   mutate(status = map2_lgl(sample.id, 
@@ -25,7 +25,7 @@ results <- data %>%
 
 # Then group and summarize
 summary <- results %>%
-  filter (sample.id == 'HG02080') %>%
+  #filter (sample.id == 'HG02080') %>%
   group_by(l, p) %>%
   summarize(
     okay_count = sum(status == "okay"),
@@ -161,3 +161,25 @@ ggsave(
   bg = "white"  # ensures white background
 )
 
+
+
+results %>%
+  filter(sample.id == 'HG02080' , status == 'not_okay') %>% filter(l > 9 & l < 15 & p < 25) %>%
+  ggplot(aes(x = as.factor(l), y = as.factor(p))) +
+  # Add points for parameter combinations
+  geom_point(color = "red", size = 3) +
+  # Add text for haplotype information
+  geom_text(aes(label = str_c(haplotype.1, "\n", haplotype.2)), 
+            size = 2.5,
+            vjust = -1) +
+  labs(
+    x = "min-MEM-length (l)",
+    y = "max-num-pangenome-MEMs (p)",
+    title = "HG02080 Not Okay Cases with Haplotype Information"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 8),
+    plot.title = element_text(hjust = 0.5),
+    panel.grid.minor = element_blank()
+  )

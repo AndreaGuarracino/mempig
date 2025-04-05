@@ -5,6 +5,9 @@ DIR_BASE="$1"
 NAME="$2"
 INPUT_READ="$3"
 L="$4"
+GRAPH_GFA="$5"
+CLUSTER_JSON="$6"
+FASTA="$7"
 
 # Load required modules or set up environment if necessary
 hostname
@@ -16,13 +19,13 @@ for p in $(seq 1 50); do
     
     ropebwt3 mem -l "$L" "$DIR_BASE/ropebwt3/indexes/extracted.fmd" "$INPUT_READ" -p "$p" -t 8 > "${NAME}-vs-extracted.mem.l${L}.p${p}.tsv"
     
-    python3 "$DIR_BASE/ropebwt3-to-paf.py" "${NAME}-vs-extracted.mem.l${L}.p${p}.tsv" <(cut -f 1,2 "$DIR_BASE/impg/extracted.fasta.fai") "${NAME}-vs-extracted.mem.l${L}.p${p}.paf"
+    python3 "$DIR_BASE/ropebwt3-to-paf.py" "${NAME}-vs-extracted.mem.l${L}.p${p}.tsv" <(cut -f 1,2 "$FASTA.fai") "${NAME}-vs-extracted.mem.l${L}.p${p}.paf"
     
-    gfainject --gfa "$DIR_BASE/odgi/graph.gfa" --paf "${NAME}-vs-extracted.mem.l${L}.p${p}.paf" > "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf"
+    gfainject --gfa "$GRAPH_GFA" --paf "${NAME}-vs-extracted.mem.l${L}.p${p}.paf" > "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf"
     
-    gafpack -g "$DIR_BASE/odgi/graph.gfa" -a "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf" --len-scale --weight-queries | pigz -9 -p 8 > "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz"
+    gafpack -g "$GRAPH_GFA" -a "${NAME}-vs-extracted.mem.l${L}.p${p}.gaf" --len-scale --weight-queries | pigz -9 -p 8 > "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz"
     
-    cosigt -p "$DIR_BASE/odgi/paths_matrix.tsv.gz" -g "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz" -o . -i "$NAME" -c "$DIR_BASE/odgi/chopped.similarity.clusters.json"
+    cosigt -p "$DIR_BASE/odgi/paths_matrix.tsv.gz" -g "${NAME}-vs-extracted.mem.l${L}.p${p}.gafpack.gz" -o . -i "$NAME" -c "$CLUSTER_JSON"
     
     mv cosigt_genotype.tsv "$DIR_BASE/ropebwt3/cosigt_genotype.${NAME}.l${L}.p${p}.tsv"
     
