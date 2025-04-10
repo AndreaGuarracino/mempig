@@ -16,7 +16,7 @@ def convert_to_paf(input_file, output_file, target_info):
             query_start = int(fields[1])  # 0-based
             query_end = int(fields[2])
             
-            mem_length = query_end - query_start + 1
+            mem_length = query_end - query_start
             
             # Process all target fields (column 6 and beyond)
             target_fields = fields[5:]

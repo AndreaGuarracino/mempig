@@ -1,6 +1,6 @@
 
 ```shell
-cd $DIR_BASE
+cd $dir_base
 
 PATH_READS=/home/guarracino/git/moni/data/SARS-CoV2/reads.fastq.gz
 PATH_PANG=/home/guarracino/git/moni/data/SARS-CoV2/SARS-CoV2.1k.fa.gz
