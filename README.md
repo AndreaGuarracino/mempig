@@ -183,162 +183,162 @@ ls /lizardfs/guarracino/pangenomes/HGSVC3/*.fa.gz | grep -Ff <(ls $dir_base/cram
     sbatch -p allnodes -c 24 --job-name $sample-vs-grch38 --wrap "hostmame; cd /scratch; wfmash $dir_base/reference/GRCh38.fa.gz $fasta -s 10k -p 95 -t 24 > $dir_base/wfmash/$sample-vs-grch38.aln.paf"
 done
 
+
 mkdir -p $dir_base/regions_of_interest
-echo -e "chr6\t31972057\t32055418" > $dir_base/regions_of_interest/C4.bed
-echo -e "chr22\t42077656\t42253758" > $dir_base/regions_of_interest/CYP2D6.bed
-echo -e "chr1\t103304997\t103901127" > $dir_base/regions_of_interest/AMY.bed
+cat $dir_base/data/loci.bed | while read -r chrom start end name; do echo -e "$chrom\t$start\t$end\t$name" > $dir_base/regions_of_interest/$name.bed; done
+# echo -e "chr6\t31972057\t32055418" > $dir_base/regions_of_interest/C4.bed
+# echo -e "chr22\t42077656\t42253758" > $dir_base/regions_of_interest/CYP2D6.bed
+# echo -e "chr1\t103304997\t103901127" > $dir_base/regions_of_interest/AMY.bed
 
-region=C4
-region=CYP2D6
-region=AMY
+# region=C4
+# region=CYP2D6
+# region=AMY
+ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read region; do
+    mkdir -p $dir_base/impg
+    ls $dir_base/wfmash/*.paf | while read paf; do
+        sample=$(basename $paf .paf)
 
-mkdir -p $dir_base/impg
-ls $dir_base/wfmash/*.paf | while read paf; do
-    sample=$(basename $paf .paf)
+        impg query \
+            -p $paf \
+            -b $dir_base/regions_of_interest/$region.bed
+    done > $dir_base/impg/$region.projected.bedpe
+    bedtools sort -i $dir_base/impg/$region.projected.bedpe | \
+        bedtools merge -d 100000 | grep '#U#' -v > $dir_base/impg/$region.merged.bed
 
-    impg query \
-        -p $paf \
-        -b $dir_base/regions_of_interest/$region.bed
-done > $dir_base/impg/$region.projected.bedpe
-bedtools sort -i $dir_base/impg/$region.projected.bedpe | \
-    bedtools merge -d 100000 | grep '#U#' -v > $dir_base/impg/$region.merged.bed
+    ls $dir_base/wfmash/*.paf | while read paf; do
+        sample=$(basename $paf "-vs-grch38.aln.paf")
+        fasta=/lizardfs/guarracino/pangenomes/HGSVC3/$sample.fa.gz
 
-ls $dir_base/wfmash/*.paf | while read paf; do
-    sample=$(basename $paf "-vs-grch38.aln.paf")
-    fasta=/lizardfs/guarracino/pangenomes/HGSVC3/$sample.fa.gz
+        bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$region.merged.bed)
+    done | bgzip -@ 8 > $dir_base/impg/$region.extracted.fa.gz
+    samtools faidx $dir_base/impg/$region.extracted.fa.gz
 
-    bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$region.merged.bed)
-done | bgzip -@ 8 > $dir_base/impg/$region.extracted.fa.gz
-samtools faidx $dir_base/impg/$region.extracted.fa.gz
+    mkdir $dir_base/pggb
+    pggb -i $dir_base/impg/$region.extracted.fa.gz -o  $dir_base/pggb/$region -t 24 -D /scratch
+    mv $dir_base/pggb/$region/*smooth.final.og $dir_base/pggb/$region/$region.final.og # Rename the final ODGI graph in a more human-friendly way
 
-mkdir $dir_base/pggb
-pggb -i $dir_base/impg/$region.extracted.fa.gz -o  $dir_base/pggb/$region -t 48 -D /scratch
-mv $dir_base/pggb/$region/*smooth.final.og $dir_base/pggb/$region/$region.final.og # Rename the final ODGI graph in a more human-friendly way
+    mkdir $dir_base/odgi
+    odgi chop \
+        -i $dir_base/pggb/$region/$region.final.og \
+        -c 32 \
+        -o $dir_base/odgi/$region.chopped.og
+    odgi paths \
+        -i $dir_base/odgi/$region.chopped.og \
+        -H | \
+        cut -f 1,4- | \
+        gzip > $dir_base/odgi/$region.paths_matrix.tsv.gz
 
-mkdir $dir_base/odgi
-odgi chop \
-    -i $dir_base/pggb/$region/$region.final.og \
-    -c 32 \
-    -o $dir_base/odgi/$region.chopped.og
-odgi paths \
-    -i $dir_base/odgi/$region.chopped.og \
-    -H | \
-    cut -f 1,4- | \
-    gzip > $dir_base/odgi/$region.paths_matrix.tsv.gz
+    ######################################################################################################
 
-######################################################################################################
+    # conda activate /lizardfs/guarracino/condatools/bwa-mem2/2.2.1
+    # bwa-mem2 index $dir_base/impg/$region.extracted.fa.gz
+    # mkdir -p $dir_base/alignments/$region
+    # ls $dir_base/cram/*cram | while read cram; do
+    #     echo $cram
+    #     sample=$(basename $cram .cram)
 
-conda activate /lizardfs/guarracino/condatools/bwa-mem2/2.2.1
-bwa-mem2 index $dir_base/impg/$region.extracted.fa.gz
-mkdir -p $dir_base/alignments/$region
-ls $dir_base/cram/*cram | while read cram; do
-    echo $cram
-    sample=$(basename $cram .cram)
+    #     # Extract reads covering the region and then align them against the pangenome
+    #     samtools view \
+    #         -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
+    #         -L $dir_base/regions_of_interest/$region.bed \
+    #         -M \
+    #         -b \
+    #         $cram | \
+    #         samtools sort -n | \
+    #         samtools fasta | \
+    #             bwa-mem2 mem -t 6 $dir_base/impg/$region.extracted.fa.gz - | \
+    #             samtools view -b -F 4 -@ 2 - \
+    #             > $dir_base/alignments/$region/$sample.reads_vs_extracted.bam
+    # done
+    # conda deactivate
 
-    # Extract reads covering the region and then align them against the pangenome
-    samtools view \
-        -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
-        -L $dir_base/regions_of_interest/$region.bed \
-        -M \
-        -b \
-        $cram | \
-        samtools sort -n | \
-        samtools fasta | \
-            bwa-mem2 mem -t 6 $dir_base/impg/$region.extracted.fa.gz - | \
-            samtools view -b -F 4 -@ 2 - \
-            > $dir_base/alignments/$region/$sample.reads_vs_extracted.bam
+    #=====================================================================================================
+
+    mkdir -p $dir_base/ropebwt3/$region/indexes
+    # Construct a BWT for both strands of the input sequences
+    ropebwt3 build $dir_base/impg/$region.extracted.fa.gz -do $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd
+    # Sampled suffix array
+    ropebwt3 ssa -o $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd.ssa -s8 -t 24 $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd
+    # Sequence lengths
+    seqtk comp $dir_base/impg/$region.extracted.fa.gz | cut -f1,2 | gzip > $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd.len.gz
+
+    ls $dir_base/cram/*cram | while read cram; do
+        echo $cram
+        sample=$(basename $cram .cram)
+
+        # Extract reads covering the $region region and MEME them against the pangenome
+        samtools view \
+            -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
+            -L $dir_base/regions_of_interest/$region.bed \
+            -M \
+            -b \
+            $cram | \
+            samtools fasta | \
+                ropebwt3 mem -l 17 $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd - -p 1 -t 6 > $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.tsv
+
+        fasta=$dir_base/impg/$region.extracted.fa.gz
+        python3 $dir_base/scripts/ropebwt3-to-paf.py $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.tsv <(cut -f 1,2 $fasta.fai) $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.paf
+    done
+
+    ######################################################################################################
+
+    odgi view \
+        -i $dir_base/odgi/$region.chopped.og \
+        -g > $dir_base/odgi/$region.chopped.gfa
+    mkdir -p $dir_base/alignments/$region
+    ls $dir_base/cram/*cram | while read cram; do
+        echo $cram
+        sample=$(basename $cram .cram)
+
+        gfainject \
+            --gfa $dir_base/odgi/$region.chopped.gfa \
+            --paf $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.paf \
+            > $dir_base/alignments/$region/$sample.injected.gaf
+    done
+            #--bam $dir_base/alignments/$region/$sample.reads_vs_extracted.bam \
+
+    ls $dir_base/cram/*cram | while read cram; do
+        echo $cram
+        sample=$(basename $cram .cram)
+
+        gafpack \
+            --gfa $dir_base/odgi/$region.chopped.gfa \
+            --gaf $dir_base/alignments/$region/$sample.injected.gaf \
+            --len-scale | \
+            gzip > $dir_base/alignments/$region/$sample.coverage.gafpack.gz
+    done
+
+    # First generate the similarity matrix using odgi
+    mkdir -p $dir_base/odgi/dissimilarity
+    odgi similarity \
+        -i $dir_base/odgi/$region.chopped.og -d \
+        > $dir_base/odgi/dissimilarity/$region.tsv
+    # Download the clustering script from cosigt repository
+    mkdir -p $dir_base/clusters
+    #wget https://raw.githubusercontent.com/davidebolo1993/cosigt/ed9f117a7e1dad23e262e9d78dd777a97a0fde74/cosigt_smk/workflow/scripts/cluster.r -P clusters
+    # Run the clustering script to generate the JSON
+    Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $dir_base/odgi/dissimilarity/$region.tsv $dir_base/clusters/$region.clusters.json automatic 0
+
+    mkdir -p $dir_base/cosigt
+    ls $dir_base/cram/*cram | while read cram; do
+        echo $cram
+        sample=$(basename $cram .cram)
+
+        cosigt \
+            -i $sample \
+            -p $dir_base/odgi/$region.paths_matrix.tsv.gz \
+            -g $dir_base/alignments/$region/$sample.coverage.gafpack.gz \
+            -c $dir_base/clusters/$region.clusters.json \
+            -o $dir_base/cosigt/$sample/$region
+
+        #mv $dir_base/cosigt/$region/cosigt_genotype.tsv $dir_base/cosigt/$region/$sample.cosigt_genotype.tsv
+        #mv $dir_base/cosigt/$region/sorted_combos.tsv $dir_base/cosigt/$region/$sample.sorted_combos.tsv
+    done
+
+    #grep 'final' -h $dir_base/cosigt/*/$region/cosigt_genotype.tsv | column -t
 done
-conda deactivate
 
-#=====================================================================================================
-
-mkdir -p $dir_base/ropebwt3/$region/indexes
-# Construct a BWT for both strands of the input sequences
-ropebwt3 build $dir_base/impg/$region.extracted.fa.gz -do $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd
-# Sampled suffix array
-ropebwt3 ssa -o $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd.ssa -s8 -t 24 $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd
-# Sequence lengths
-seqtk comp $dir_base/impg/$region.extracted.fa.gz | cut -f1,2 | gzip > $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd.len.gz
-
-ls $dir_base/cram/*cram | while read cram; do
-    echo $cram
-    sample=$(basename $cram .cram)
-
-    # Extract reads covering the $region region and MEME them against the pangenome
-    samtools view \
-        -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
-        -L $dir_base/regions_of_interest/$region.bed \
-        -M \
-        -b \
-        $cram | \
-        samtools fasta | \
-            ropebwt3 mem -l 17 $dir_base/ropebwt3/$region/indexes/$region.extracted.fmd - -p 1 -t 6 > $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.tsv
-
-    fasta=$dir_base/impg/$region.extracted.fa.gz
-    python3 $dir_base/scripts/ropebwt3-to-paf.py $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.tsv <(cut -f 1,2 $fasta.fai) $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.paf
-done
-
-######################################################################################################
-
-odgi view \
-    -i $dir_base/odgi/$region.chopped.og \
-    -g > $dir_base/odgi/$region.chopped.gfa
-mkdir -p $dir_base/alignments/$region
-ls $dir_base/cram/*cram | while read cram; do
-    echo $cram
-    sample=$(basename $cram .cram)
-
-    gfainject \
-        --gfa $dir_base/odgi/$region.chopped.gfa \
-        --paf $dir_base/ropebwt3/$region/$sample.reads_vs_extracted.mem.paf \
-        > $dir_base/alignments/$region/$sample.injected.gaf
-done
-        #--bam $dir_base/alignments/$region/$sample.reads_vs_extracted.bam \
-
-ls $dir_base/cram/*cram | while read cram; do
-    echo $cram
-    sample=$(basename $cram .cram)
-
-    gafpack \
-        --gfa $dir_base/odgi/$region.chopped.gfa \
-        --gaf $dir_base/alignments/$region/$sample.injected.gaf \
-        --len-scale | \
-        gzip > $dir_base/alignments/$region/$sample.coverage.gafpack.gz
-done
-
-# First generate the similarity matrix using odgi
-mkdir -p $dir_base/odgi/dissimilarity
-odgi similarity \
-    -i $dir_base/odgi/$region.chopped.og -d \
-    > $dir_base/odgi/dissimilarity/$region.tsv
-# Download the clustering script from cosigt repository
-mkdir -p $dir_base/clusters
-#wget https://raw.githubusercontent.com/davidebolo1993/cosigt/16b18815cf9fdfcbf2afbf588a02740c27941ee3/cosigt_smk/workflow/scripts/cluster.r -P clusters
-wget https://raw.githubusercontent.com/davidebolo1993/cosigt/ed9f117a7e1dad23e262e9d78dd777a97a0fde74/cosigt_smk/workflow/scripts/cluster.r -P clusters
-# Run the clustering script to generate the JSON
-Rscript clusters/cluster.r $dir_base/odgi/dissimilarity/$region.tsv $dir_base/clusters/$region.clusters.json automatic 0
-
-mkdir -p $dir_base/cosigt
-ls $dir_base/cram/*cram | while read cram; do
-    echo $cram
-    sample=$(basename $cram .cram)
-
-    cosigt \
-        -i $sample \
-        -p $dir_base/odgi/$region.paths_matrix.tsv.gz \
-        -g $dir_base/alignments/$region/$sample.coverage.gafpack.gz \
-        -c $dir_base/clusters/$region.clusters.json \
-        -o $dir_base/cosigt/$sample/$region
-
-    #mv $dir_base/cosigt/$region/cosigt_genotype.tsv $dir_base/cosigt/$region/$sample.cosigt_genotype.tsv
-    #mv $dir_base/cosigt/$region/sorted_combos.tsv $dir_base/cosigt/$region/$sample.sorted_combos.tsv
-done
-
-grep 'final' -h $dir_base/cosigt/*/$region/cosigt_genotype.tsv | column -t
-
-
-wget -c https://raw.githubusercontent.com/davidebolo1993/cosigt/refs/heads/master/cosigt_smk/workflow/scripts/plottpr.r
-
+#wget -c https://raw.githubusercontent.com/davidebolo1993/cosigt/refs/heads/master/cosigt_smk/workflow/scripts/plottpr.r
 mkdir -p $dir_base/benchmark/
 Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/plottpr.r $dir_base/cosigt $dir_base/clusters $dir_base/odgi/dissimilarity/ $dir_base/benchmark/benchmark.pdf
 ```
