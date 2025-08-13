@@ -42,7 +42,7 @@ Build `cosigt`:
 cd /lizardfs/guarracino/git
 git clone https://github.com/davidebolo1993/cosigt
 cd cosigt
-git checkout ed9f117a7e1dad23e262e9d78dd777a97a0fde74
+git checkout 312f69b645cf99ea669dfb6388dd15898f1ae4bd
 go mod init cosigt && go mod tidy && go build cosigt
 #Add 'export PATH="/lizardfs/guarracino/git/cosigt:$PATH"' to ~/.zshrc
 ```
@@ -269,7 +269,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
         --temp-dir /scratch
 
     mkdir -p $dir_base/odgi/paths/matrix/$chrom
-        -i $dir_base/pggb/$chrom/$region/$region.og \
+    odgi paths -i $dir_base/pggb/$chrom/$region/$region.og \
         -H | \
         cut -f 1,4- | \
         gzip > $dir_base/odgi/paths/matrix/$chrom/$region.paths_matrix.tsv.gz
@@ -309,7 +309,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     # Sequence lengths
     seqtk comp $dir_base/impg/$chrom/$region/$region.extracted.fa.gz | cut -f1,2 | gzip > $dir_ropebwt3/$region.fasta.gz.fmd.len.gz
 
-    fasta=$dir_base/impg/$region.extracted.fa.gz
+    fasta=$dir_base/impg/$chrom/$region/$region.extracted.fa.gz
     ls $dir_base/cram/*cram | while read cram; do
         echo $cram
         sample=$(basename $cram .cram)
