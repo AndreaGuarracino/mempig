@@ -226,6 +226,7 @@ cat $dir_base/data/loci.bed | while read -r chrom start end name; do echo -e "$c
 # echo -e "chr6\t31972057\t32055418" > $dir_base/regions_of_interest/C4.bed
 # echo -e "chr22\t42077656\t42253758" > $dir_base/regions_of_interest/CYP2D6.bed
 # echo -e "chr1\t103304997\t103901127" > $dir_base/regions_of_interest/AMY.bed
+# echo -e "chr6\t29711814\t29738528" > $dir_base/regions_of_interest/HLA-F.bed
 
 # region2=C4
 # region2=CYP2D6
@@ -249,13 +250,13 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     bedtools sort -i $dir_base/impg/$chrom/$region/$region.projected.bedpe | \
         bedtools merge -d 100000 | grep '#U#' -v > $dir_base/impg/$chrom/$region/$region.merged.bed
 
-    (bedtools getfasta -fi $dir_base/reference/GRCh38.fa.gz -bed $dir_base/regions_of_interest/$region2.bed | sed 's/>chr/>GRCh38#0#chr/g';
+    #(bedtools getfasta -fi $dir_base/reference/GRCh38.fa.gz -bed $dir_base/regions_of_interest/$region2.bed | sed 's/>chr/>GRCh38#0#chr/g';
     ls $dir_base/minimap2/*.paf | while read paf; do
-        sample=$(basename $paf "-vs-grch38.aln.paf")
+        sample=$(basename $paf "-vs-grch38.paf")
         fasta=/lizardfs/guarracino/pangenomes/HGSVC3/$sample.fa.gz
 
-        bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$chrom/$region/$region.merged.bed)
-    done) | bgzip -@ 8 > $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
+        bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$chrom/$region/$region.merged.bed | grep 'HG00268#2\|HG01352#2\|NA19331#1\|HG01596#2\|HG03371#2\|NA18989#2\|HG00358#2\|NA19036#2\|NA19650#2\|HG02059#2\|HG03807#1\|HG00732#2#\|NA19238#2\|NA19705#1\|HG00864#1\|HG03009#2\|NA18534#1' -v)
+    done | bgzip -@ 8 > $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
     samtools faidx $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
 
     mkdir -p $dir_base/pggb/$chrom/$region
@@ -275,48 +276,13 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
         gzip > $dir_base/odgi/paths/matrix/$chrom/$region.paths_matrix.tsv.gz
 
     ######################################################################################################
-
-    # conda activate /lizardfs/guarracino/condatools/bwa-mem2/2.2.1
-    # bwa-mem2 index $dir_base/impg/$region.extracted.fa.gz
-    # mkdir -p $dir_base/alignments/$region
-    # ls $dir_base/cram/*cram | while read cram; do
-    #     echo $cram
-    #     sample=$(basename $cram .cram)
-
-    #     # Extract reads covering the region and then align them against the pangenome
-    #     samtools view \
-    #         -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
-    #         -L $dir_base/regions_of_interest/$region.bed \
-    #         -M \
-    #         -b \
-    #         $cram | \
-    #         samtools sort -n | \
-    #         samtools fasta | \
-    #             bwa-mem2 mem -t 6 $dir_base/impg/$region.extracted.fa.gz - | \
-    #             samtools view -b -F 4 -@ 2 - \
-    #             > $dir_base/alignments/$region/$sample.reads_vs_extracted.bam
-    # done
-    # conda deactivate
-
-    #=====================================================================================================
-
-    dir_ropebwt3=$dir_base/bedtools/getfasta/$chrom/$region
-    mkdir -p $dir_ropebwt3
-    # Construct a BWT for both strands of the input sequences
-    ropebwt3 build $dir_base/impg/$chrom/$region/$region.extracted.fa.gz -do $dir_ropebwt3/$region.fasta.gz.fmd
-    # Sampled suffix array
-    ropebwt3 ssa -o $dir_ropebwt3/$region.fasta.gz.fmd.ssa -s8 -t 24 $dir_ropebwt3/$region.fasta.gz.fmd
-    # Sequence lengths
-    seqtk comp $dir_base/impg/$chrom/$region/$region.extracted.fa.gz | cut -f1,2 | gzip > $dir_ropebwt3/$region.fasta.gz.fmd.len.gz
-
-    fasta=$dir_base/impg/$chrom/$region/$region.extracted.fa.gz
+    #conda activate /lizardfs/guarracino/condatools/bwa-mem2/2.2.1
+    bwa-mem2 index $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
     ls $dir_base/cram/*cram | while read cram; do
         echo $cram
         sample=$(basename $cram .cram)
-
-        mkdir -p $dir_base/ropebwt3/$sample/$chrom/$region
-
-        # Extract reads covering the $region region and MEME them against the pangenome
+        mkdir -p $dir_base/bwamem2/$sample/$chrom/$region
+        # Extract reads covering the region and then align them against the pangenome
         samtools view \
             -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
             -L $dir_base/regions_of_interest/$region2.bed \
@@ -324,12 +290,38 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
             -b \
             $cram | \
             samtools sort -n | \
-            samtools fasta -F 0x0 | \
-                ropebwt3 mem -l 17 $dir_ropebwt3/$region.fasta.gz.fmd - -p 1 -t 6 > $dir_base/ropebwt3/$sample/$chrom/$region/$sample.reads_vs_extracted.mem.tsv
-
-        python3 $dir_base/scripts/ropebwt3-to-paf.py $dir_base/ropebwt3/$sample/$chrom/$region/$sample.reads_vs_extracted.mem.tsv <(cut -f 1,2 $fasta.fai) $dir_base/ropebwt3/$sample/$chrom/$region/$region.realigned.paf
+            samtools fasta | \
+                bwa-mem2 mem -t 16 $dir_base/impg/$chrom/$region/$region.extracted.fa.gz - | \
+                samtools view -b -F 4 -@ 2 - \
+                > $dir_base/bwamem2/$sample/$chrom/$region/$region.realigned.bam
     done
-
+    #conda deactivate
+    #=====================================================================================================
+    # dir_ropebwt3=$dir_base/bedtools/getfasta/$chrom/$region
+    # mkdir -p $dir_ropebwt3
+    # # Construct a BWT for both strands of the input sequences
+    # ropebwt3 build $dir_base/impg/$chrom/$region/$region.extracted.fa.gz -do $dir_ropebwt3/$region.fasta.gz.fmd
+    # # Sampled suffix array
+    # ropebwt3 ssa -o $dir_ropebwt3/$region.fasta.gz.fmd.ssa -s8 -t 24 $dir_ropebwt3/$region.fasta.gz.fmd
+    # # Sequence lengths
+    # seqtk comp $dir_base/impg/$chrom/$region/$region.extracted.fa.gz | cut -f1,2 | gzip > $dir_ropebwt3/$region.fasta.gz.fmd.len.gz
+    # fasta=$dir_base/impg/$chrom/$region/$region.extracted.fa.gz
+    # ls $dir_base/cram/*cram | while read cram; do
+    #     echo $cram
+    #     sample=$(basename $cram .cram)
+    #     mkdir -p $dir_base/ropebwt3/$sample/$chrom/$region
+    #     # Extract reads covering the $region region and MEME them against the pangenome
+    #     samtools view \
+    #         -T $dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa \
+    #         -L $dir_base/regions_of_interest/$region2.bed \
+    #         -M \
+    #         -b \
+    #         $cram | \
+    #         samtools sort -n | \
+    #         samtools fasta -F 0x0 | \
+    #             ropebwt3 mem -l 29 $dir_ropebwt3/$region.fasta.gz.fmd - -p 1 -t 6 > $dir_base/ropebwt3/$sample/$chrom/$region/$sample.reads_vs_extracted.mem.tsv
+    #     python3 $dir_base/scripts/ropebwt3-to-paf.py $dir_base/ropebwt3/$sample/$chrom/$region/$sample.reads_vs_extracted.mem.tsv <(cut -f 1,2 $fasta.fai) $dir_base/ropebwt3/$sample/$chrom/$region/$region.realigned.paf
+    # done
     ######################################################################################################
 
     mkdir -p $dir_base/odgi/view/$chrom
@@ -342,9 +334,13 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
         sample=$(basename $cram .cram)
 
         mkdir -p $dir_base/gfainject/$sample/$chrom
+        # gfainject \
+        #     --gfa $dir_base/odgi/view/$chrom/$region.gfa \
+        #     --paf $dir_base/ropebwt3/$sample/$chrom/$region/$region.realigned.paf | \
+        #     gzip > $dir_base/gfainject/$sample/$chrom/$region.gaf.gz
         gfainject \
             --gfa $dir_base/odgi/view/$chrom/$region.gfa \
-            --paf $dir_base/ropebwt3/$sample/$chrom/$region/$region.realigned.paf | \
+            --bam $dir_base/bwamem2/$sample/$chrom/$region/$region.realigned.bam | \
             gzip > $dir_base/gfainject/$sample/$chrom/$region.gaf.gz
     done
 
@@ -446,7 +442,6 @@ Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scr
     $dir_base/benchmark/$chrom/$region/tpr_qv.tsv
 
 # Final step: Plot TPR results
-#for f in $dir_base/data/loci/*.bed; do sed '1d' $f | cut -f 1-4; done > tmp.bed
 cat $dir_base/regions_of_interest/*.bed > tmp.bed
 Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/plot_tpr.r \
     $dir_base/benchmark/$chrom/$region/tpr \
