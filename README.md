@@ -223,15 +223,22 @@ conda deactivate
 ```shell
 mkdir -p $dir_base/regions_of_interest
 cat $dir_base/data/loci.bed | while read -r chrom start end name; do echo -e "$chrom\t$start\t$end\t$name" > $dir_base/regions_of_interest/$name.bed; done
-# echo -e "chr6\t31972057\t32055418" > $dir_base/regions_of_interest/C4.bed
-# echo -e "chr22\t42077656\t42253758" > $dir_base/regions_of_interest/CYP2D6.bed
-# echo -e "chr1\t103304997\t103901127" > $dir_base/regions_of_interest/AMY.bed
-# echo -e "chr6\t29711814\t29738528" > $dir_base/regions_of_interest/HLA-F.bed
+echo -e "chr6\t31972057\t32055418\tC4" > $dir_base/regions_of_interest/C4.bed
+echo -e "chr22\t42077656\t42253758\tCYP2D6" > $dir_base/regions_of_interest/CYP2D6.bed
+echo -e "chr6\t29711814\t29738528\tHLA-F" > $dir_base/regions_of_interest/HLA-F.bed
+echo -e "chr16\t2088386\t2143661\tPKD1" > $dir_base/regions_of_interest/PKD1.bed
+echo -e "chr21\t43034066\t43189189\tCBS" > $dir_base/regions_of_interest/CBS.bed
+echo -e "chr20\t64080064\t64100643\tOPRL1" > $dir_base/regions_of_interest/OPRL1.bed
+echo -e "chr16\t70801860\t71230722\tHYDIN" > $dir_base/regions_of_interest/HYDIN.bed
+echo -e "chr2\t88691673\t88750929\tRPIA" > $dir_base/regions_of_interest/RPIA.bed
+echo -e "chr7\t141963337\t142192359\tMGAM" > $dir_base/regions_of_interest/MGAM.bed
+echo -e "chr20\t14638177\t14962407\tMACROD2" > $dir_base/regions_of_interest/MACROD2.bed
+echo -e "chr16\t83532778\t83743290\tCDH13" > $dir_base/regions_of_interest/CDH13.bed
+echo -e "chr1\t155089880\t155330966\tMTX1" > $dir_base/regions_of_interest/MTX1.bed
+echo -e "chr1\t103304997\t103901127\tAMY" > $dir_base/regions_of_interest/AMY.bed
+#echo -e "chr8\t43199245\t43428244\tPOTEA" > $dir_base/regions_of_interest/POTEA.bed # BROKEN LOCUS
 
-# region2=C4
-# region2=CYP2D6
-# region2=AMY
-ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read region2; do
+ls $dir_base/regions_of_interest | grep 'MGAM\|MACROD2\|CDH13\|MTX1-MUC1-THBS3\|AMY' | cut -f 1 | cut -f 1 -d '.' | while read region2; do
     chrom=$(cat $dir_base/regions_of_interest/$region2.bed | cut -f 1)
     start=$(cat $dir_base/regions_of_interest/$region2.bed | cut -f 2)
     end=$(cat $dir_base/regions_of_interest/$region2.bed | cut -f 3)
@@ -250,13 +257,13 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     bedtools sort -i $dir_base/impg/$chrom/$region/$region.projected.bedpe | \
         bedtools merge -d 100000 | grep '#U#' -v > $dir_base/impg/$chrom/$region/$region.merged.bed
 
-    #(bedtools getfasta -fi $dir_base/reference/GRCh38.fa.gz -bed $dir_base/regions_of_interest/$region2.bed | sed 's/>chr/>GRCh38#0#chr/g';
+    (bedtools getfasta -fi $dir_base/reference/GRCh38.fa.gz -bed $dir_base/regions_of_interest/$region2.bed | sed 's/>chr/>GRCh38#0#chr/g';
     ls $dir_base/minimap2/*.paf | while read paf; do
         sample=$(basename $paf "-vs-grch38.paf")
         fasta=/lizardfs/guarracino/pangenomes/HGSVC3/$sample.fa.gz
 
-        bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$chrom/$region/$region.merged.bed | grep 'HG00268#2\|HG01352#2\|NA19331#1\|HG01596#2\|HG03371#2\|NA18989#2\|HG00358#2\|NA19036#2\|NA19650#2\|HG02059#2\|HG03807#1\|HG00732#2#\|NA19238#2\|NA19705#1\|HG00864#1\|HG03009#2\|NA18534#1' -v)
-    done | bgzip -@ 8 > $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
+        bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$chrom/$region/$region.merged.bed)
+    done) | bgzip -@ 8 > $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
     samtools faidx $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
 
     mkdir -p $dir_base/pggb/$chrom/$region
@@ -379,6 +386,10 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
         automatic \
         $region_similarity
 
+    mkdir -p $dir_base/cosigt
+    /lizardfs/guarracino/git/panplexity/target/release/panplexity -i $dir_base/odgi/view/$chrom/$region.gfa -k 16 -w 100 -t 1 -m $dir_base/cosigt/$region.mask -b $dir_base/cosigt/$region.linguistic.bed
+    #/lizardfs/guarracino/git/panplexity/target/release/panplexity -i $dir_base/odgi/view/$chrom/$region.gfa -k 16 -w 100 -t 1.7 -m $dir_base/cosigt/$region.mask -b $dir_base/cosigt/$region.shannon.bed --complexity entropy
+
     ls $dir_base/cram/*cram | while read cram; do
         echo $cram
         sample=$(basename $cram .cram)
@@ -389,64 +400,89 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
             -p $dir_base/odgi/paths/matrix/$chrom/$region.paths_matrix.tsv.gz \
             -g $dir_base/gafpack/$sample/$chrom/$region.gafpack.gz \
             -c $dir_base/clusters/$chrom/$region.clusters.json \
-            -o $dir_base/cosigt/$sample/$chrom/$region
+            -o $dir_base/cosigt/$sample/$chrom/$region \
+            -m $dir_base/cosigt/$region.mask
     done
 done
 
-#region=chr6_31972057_32055418
-mkdir -p benchmark/$chrom/$region
+ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read region2; do
+    chrom=$(cat $dir_base/regions_of_interest/$region2.bed | cut -f 1)
+    start=$(cat $dir_base/regions_of_interest/$region2.bed | cut -f 2)
+    end=$(cat $dir_base/regions_of_interest/$region2.bed | cut -f 3)
+    region=${chrom}_${start}_${end}
 
-# Step 1: Make TPR table
-Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calc_tpr.r \
-    $dir_base/odgi/dissimilarity/$chrom/$region.tsv \
-    $dir_base/clusters/$chrom/$region.clusters.json \
-    $dir_base/clusters/$chrom/$region.clusters.hapdist.tsv \
-    $dir_base/benchmark/$chrom/$region/tpr.tsv \
-    $dir_base/cosigt/*/$chrom/$region/sorted_combos.tsv
+    echo $region
 
-# Step 2: Flip PGGB graph
-odgi flip \
-    -i  $dir_base/pggb/$chrom/$region/$region.og \
-    -o  $dir_base/benchmark/$chrom/$region/$region.flip.og -P \
-    --ref-flips <(grep '^P' $dir_base/odgi/view/$chrom/$region.gfa | cut -f 2 | grep "GRCh38#0")
+    mkdir -p benchmark/$chrom/$region
 
-# Step 3: Convert OG to FASTA
-odgi paths \
-    -i $dir_base/benchmark/$chrom/$region/$region.flip.og \
-    -f | sed 's/_inv$//g' > $dir_base/benchmark/$chrom/$region/$region.flip.fasta
+    # Step 1: Make TPR table
+    Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calc_tpr.r \
+        $dir_base/odgi/dissimilarity/$chrom/$region.tsv \
+        $dir_base/clusters/$chrom/$region.clusters.json \
+        $dir_base/clusters/$chrom/$region.clusters.hapdist.tsv \
+        $dir_base/benchmark/$chrom/$region/tpr.tsv \
+        $dir_base/cosigt/*/$chrom/$region/sorted_combos.tsv
 
-# Step 4: Prepare combinations for QV
-mkdir -p $dir_base/benchmark/$chrom/$region/qv_prep
-bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/prepare_qv.sh \
-    $dir_base/benchmark/$chrom/$region/tpr.tsv \
-    $dir_base/benchmark/$chrom/$region/$region.flip.fasta \
-    $dir_base/benchmark/$chrom/$region/qv_prep
+    # Step 2: Flip PGGB graph
+    odgi flip \
+        -i  $dir_base/pggb/$chrom/$region/$region.og \
+        -o  $dir_base/benchmark/$chrom/$region/$region.flip.og -P \
+        --ref-flips <(grep '^P' $dir_base/odgi/view/$chrom/$region.gfa | cut -f 2 | grep "GRCh38#0")
 
-# Step 5: Calculate QV for each sample
-for sample_dir in $dir_base/benchmark/$chrom/$region/qv_prep/*/ ; do
-    sample=$(basename "$sample_dir")
-    echo "Calculating QV for sample $sample"
-    bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calculate_qv.sh \
-        $dir_base/benchmark/$chrom/$region/qv_prep/$sample \
-        $dir_base/benchmark/$chrom/$region/qv_prep/$sample/qv.tsv
+    # Step 3: Convert OG to FASTA
+    odgi paths \
+        -i $dir_base/benchmark/$chrom/$region/$region.flip.og \
+        -f | sed 's/_inv$//g' > $dir_base/benchmark/$chrom/$region/$region.flip.fasta
+
+    # Step 4: Prepare combinations for QV
+    mkdir -p $dir_base/benchmark/$chrom/$region/qv_prep
+    bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/prepare_qv.sh \
+        $dir_base/benchmark/$chrom/$region/tpr.tsv \
+        $dir_base/benchmark/$chrom/$region/$region.flip.fasta \
+        $dir_base/benchmark/$chrom/$region/qv_prep
+
+    # # Step 5: Calculate QV for each sample
+    # for sample_dir in $dir_base/benchmark/$chrom/$region/qv_prep/*/ ; do
+    #     sample=$(basename "$sample_dir")
+    #     echo "Calculating QV for sample $sample"
+    #     bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calculate_qv.sh \
+    #         $dir_base/benchmark/$chrom/$region/qv_prep/$sample \
+    #         $dir_base/benchmark/$chrom/$region/qv_prep/$sample/qv.tsv
+    # done
+    # Step 5: Calculate QV for each sample (parallelized)
+    find $dir_base/benchmark/$chrom/$region/qv_prep -mindepth 1 -maxdepth 1 -type d | \
+    parallel -j 40 '
+        sample=$(basename {})
+        echo "Calculating QV for sample $sample"
+        bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calculate_qv.sh \
+            {} \
+            {}/qv.tsv
+    '
+
+    # Step 6: Combine QV results
+    cat $dir_base/benchmark/$chrom/$region/qv_prep/*/qv.tsv > $dir_base/benchmark/$chrom/$region/bestqv.tsv
+
+    # Step 7: Combine TPR and QV
+    Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/combine_tpr_qv.r \
+        $dir_base/benchmark/$chrom/$region/tpr.tsv \
+        $dir_base/benchmark/$chrom/$region/bestqv.tsv \
+        $region \
+        $dir_base/benchmark/$chrom/$region/tpr_qv.tsv
+
+    # cat $dir_base/regions_of_interest/*.bed > tmp.bed
+    # Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/plot_tpr.r \
+    #     $dir_base/benchmark/$chrom/$region/tpr \
+    #     tmp.bed \
+    #     $dir_base/benchmark/$chrom/$region/tpr_qv.tsv
+    # rm tmp.bed
 done
-
-# Step 6: Combine QV results
-cat $dir_base/benchmark/$chrom/$region/qv_prep/*/qv.tsv > $dir_base/benchmark/$chrom/$region/bestqv.tsv
-
-# Step 7: Combine TPR and QV
-Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/combine_tpr_qv.r \
-    $dir_base/benchmark/$chrom/$region/tpr.tsv \
-    $dir_base/benchmark/$chrom/$region/bestqv.tsv \
-    $region \
-    $dir_base/benchmark/$chrom/$region/tpr_qv.tsv
 
 # Final step: Plot TPR results
 cat $dir_base/regions_of_interest/*.bed > tmp.bed
 Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/plot_tpr.r \
-    $dir_base/benchmark/$chrom/$region/tpr \
+    $dir_base/benchmark/tpr \
     tmp.bed \
-    $dir_base/benchmark/$chrom/$region/tpr_qv.tsv
+    $dir_base/benchmark/*/*/tpr_qv.tsv
 rm tmp.bed
 ```
 
