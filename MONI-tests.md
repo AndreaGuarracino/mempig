@@ -36,7 +36,7 @@ moni build -f scerevisiae8.fa.gz -o xxx/scerevisiae8
 moni mems -i xxx/scerevisiae8 -p 1read.fq
 
 # MONI
-conda activate /lizardfs/guarracino/condatools/moni/0.2.2
+conda activate /moosefs/guarracino/condatools/moni/0.2.2
 mkdir -p /scratch/small_test_output/moni
 moni build -r /scratch/small_test_output/impg/extracted.fasta -o /scratch/small_test_output/moni/extracted -f
 # Compute the MEMs of reads against the pangenome

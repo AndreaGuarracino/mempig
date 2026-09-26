@@ -3,27 +3,27 @@
 ## Paths
 
 ```shell
-dir_base=/lizardfs/guarracino/mempig
+dir_base=/moosefs/raid5/guarracino/mempig
 
-export PATH="/lizardfs/guarracino/tools/bedtools2/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools/samtools-1.22.1:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/impg/target/release:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/wfmash/build/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/seqwish/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/smoothxg/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/GFAffix/target/release:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/odgi/bin:$PATH" # v0.9.3
-export PATH="/lizardfs/guarracino/tools_for_genotyping/pggb:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/gfainject/target/release:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/gafpack/target/release:$PATH" # f08c04b4596bd9c40b0e62641f37c2500b956a1a
-export PATH="/lizardfs/guarracino/tools_for_genotyping/panplexity/target/release:$PATH" # 46d065c1b6669657479736ae127eb16d5eea454f
-export PATH="/lizardfs/guarracino/tools_for_genotyping/bwa-mem2-2.2.1_x64-linux:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/cosigt:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_genotyping/agc-1.1_x64-linux:$PATH"
+export PATH="/moosefs/guarracino/tools/bedtools2/bin:$PATH"
+#export PATH="/moosefs/guarracino/tools/samtools-1.22.1:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/impg/target/release:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/wfmash/build/bin:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/seqwish/bin:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/smoothxg/bin:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/GFAffix/target/release:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/odgi/bin:$PATH" # v0.9.3
+export PATH="/moosefs/guarracino/tools_for_genotyping/pggb:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/gfainject/target/release:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/gafpack/target/release:$PATH" # f08c04b4596bd9c40b0e62641f37c2500b956a1a
+export PATH="/moosefs/guarracino/tools_for_genotyping/panplexity/target/release:$PATH" # 46d065c1b6669657479736ae127eb16d5eea454f
+export PATH="/moosefs/guarracino/tools_for_genotyping/bwa-mem2-2.2.1_x64-linux:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/cosigt:$PATH"
+export PATH="/moosefs/guarracino/tools_for_genotyping/agc-1.1_x64-linux:$PATH"
 
-export PATH="/lizardfs/guarracino/git/seqtk:$PATH"
+export PATH="/moosefs/guarracino/git/seqtk:$PATH"
 
-#export PATH="/lizardfs/guarracino/condatools/emboss/6.6.0/bin/stretcher:$PATH" 
+#export PATH="/moosefs/guarracino/condatools/emboss/6.6.0/bin/stretcher:$PATH" 
 ```
 
 ## Tools
@@ -33,58 +33,58 @@ export PATH="/lizardfs/guarracino/git/seqtk:$PATH"
 Install `go`:
 
 ```shell
-cd /lizardfs/guarracino/tools
+cd /moosefs/guarracino/tools
 wget -c https://go.dev/dl/go1.24.2.linux-amd64.tar.gz
-tar -C /lizardfs/guarracino/tools -xzf go1.24.2.linux-amd64.tar.gz && rm go1.24.2.linux-amd64.tar.gz
-#Add 'export PATH="/lizardfs/guarracino/tools/go/bin:$PATH"' to ~/.zshrc
+tar -C /moosefs/guarracino/tools -xzf go1.24.2.linux-amd64.tar.gz && rm go1.24.2.linux-amd64.tar.gz
+#Add 'export PATH="/moosefs/guarracino/tools/go/bin:$PATH"' to ~/.zshrc
 ```
 
 Build `cosigt`:
 
 ```shell
-cd /lizardfs/guarracino/git
+cd /moosefs/guarracino/git
 git clone https://github.com/davidebolo1993/cosigt
 cd cosigt
 git checkout 312f69b645cf99ea669dfb6388dd15898f1ae4bd
 go mod init cosigt && go mod tidy && go build cosigt
-#Add 'export PATH="/lizardfs/guarracino/git/cosigt:$PATH"' to ~/.zshrc
+#Add 'export PATH="/moosefs/guarracino/git/cosigt:$PATH"' to ~/.zshrc
 ```
 
 ### minimap2
 
 ```shell
-conda create --prefix /lizardfs/guarracino/condatools/minimap2/2.28 -c conda-forge -c bioconda minimap2=2.28 -y
+conda create --prefix /moosefs/guarracino/condatools/minimap2/2.28 -c conda-forge -c bioconda minimap2=2.28 -y
 ```
 
 ## bwa-mem2
 
 ```shell
-conda create --prefix /lizardfs/guarracino/condatools/bwa-mem2/2.2.1 -c conda-forge -c bioconda -c anaconda bwa-mem2=2.2.1 -y
+conda create --prefix /moosefs/guarracino/condatools/bwa-mem2/2.2.1 -c conda-forge -c bioconda -c anaconda bwa-mem2=2.2.1 -y
 ```
 
 <!-- Create a `conda` environment for `cosigt` with all its dependencies but R:
 
 ```shell
-conda create --prefix /lizardfs/guarracino/condatools/cosigt -c conda-forge -c bioconda -c anaconda -c vikky34v snakemake=7.32.4 cookiecutter=2.6.0 bwa-mem2=2.2.1 megadepth samtools=1.21 python=3.9 pyyaml=6.0.2 pandas -y #bedtools=2.31.1  r-base r-rjson=0.2.23 r-reshape2=1.4.4 r-nbclust=3.0.1 r-data.table r-ggplot2=3.5.1 r-dendextend=1.18.1 r-gggenes=0.5.1 bioconductor-rtracklayer time -y
+conda create --prefix /moosefs/guarracino/condatools/cosigt -c conda-forge -c bioconda -c anaconda -c vikky34v snakemake=7.32.4 cookiecutter=2.6.0 bwa-mem2=2.2.1 megadepth samtools=1.21 python=3.9 pyyaml=6.0.2 pandas -y #bedtools=2.31.1  r-base r-rjson=0.2.23 r-reshape2=1.4.4 r-nbclust=3.0.1 r-data.table r-ggplot2=3.5.1 r-dendextend=1.18.1 r-gggenes=0.5.1 bioconductor-rtracklayer time -y
 ``` -->
 
 ### ropebwt3
 
 ```shell
-cd /lizardfs/guarracino/git
+cd /moosefs/guarracino/git
 git clone https://github.com/lh3/ropebwt3
 cd ropebwt3
 git checkout 36a64118322cdd5c20690ec05c28bf0b22c71a98
 make
-#Add 'export PATH="/lizardfs/guarracino/git/ropebwt3:$PATH"' to ~/.zshrc
+#Add 'export PATH="/moosefs/guarracino/git/ropebwt3:$PATH"' to ~/.zshrc
 ```
 
 <!-- ### MONI (not fully functional)
 
 ```shell
-conda create --prefix /lizardfs/guarracino/condatools/moni/0.2.2 -c conda-forge -c bioconda moni=0.2.2 -y
+conda create --prefix /moosefs/guarracino/condatools/moni/0.2.2 -c conda-forge -c bioconda moni=0.2.2 -y
 
-# cd /lizardfs/guarracino/git
+# cd /moosefs/guarracino/git
 # git clone https://github.com/maxrossi91/moni
 
 # https://github.com/maxrossi91/moni/issues/2#issuecomment-2362544812
@@ -94,7 +94,7 @@ conda create --prefix /lizardfs/guarracino/condatools/moni/0.2.2 -c conda-forge 
 # cmake ..
 # make -j 16 VERBOSE=1
 
-# cd /lizardfs/guarracino/tools
+# cd /moosefs/guarracino/tools
 # wget https://github.com/maxrossi91/moni/releases/download/v0.2.2/moni-0.2.2-Linux.tar.gz
 # tar -xzvf moni-0.2.2-Linux.tar.gz && rm moni-0.2.2-Linux.tar.gz
 # mv moni-0.2.2-Linux moni-0.2.2
@@ -103,21 +103,6 @@ conda create --prefix /lizardfs/guarracino/condatools/moni/0.2.2 -c conda-forge 
 ### PGGB and Co.
 
 It assumes that all `pggb` and its tools (`wfmash`, `seqwish`, `smoothxg`, `odgi`, `gfaffix`), `samtools`, `bedtools` are in `$PATH` are installed and included in system's `$PATH` environment variable so they can be executed from any directory.
-
-```shell
-export PATH="/lizardfs/guarracino/tools/bedtools2/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools/samtools-1.21:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/gafpack/target/release:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/GFAffix/target/release:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/impg/target/release:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/gfainject/target/release:$PATH"
-
-export PATH="/lizardfs/guarracino/tools_for_cosigt/wfmash/build/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/seqwish/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/smoothxg/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/odgi/bin:$PATH"
-export PATH="/lizardfs/guarracino/tools_for_cosigt/pggb:$PATH"
-```
 
 ## Data
 
@@ -139,7 +124,7 @@ samtools faidx GRCh38.fa.gz
 
 ```shell
 cd /scratch
-ls /lizardfs/guarracino/pangenomes/HGSVC3/*.fa.gz | rev | cut -f 1 -d '/' | rev | cut -f 1 -d '.' | while read sample; do url=$(cat $dir_base/data/1000G_*.index | grep $sample -m 1 | cut -f 1); echo $url; wget -c $url; wget -c $url.crai; done
+ls /moosefs/pangenomes/HGSVC3/*.fa.gz | rev | cut -f 1 -d '/' | rev | cut -f 1 -d '.' | while read sample; do url=$(cat $dir_base/data/1000G_*.index | grep $sample -m 1 | cut -f 1); echo $url; wget -c $url; wget -c $url.crai; done
 mv *.cram* $dir_base/cram
 
 # NOT DOWNLOADED: NA24385 (from project PRJEB35491)
@@ -168,7 +153,7 @@ ls $dir_base/cram/*.cram | while read CRAM; do samtools index $CRAM; done
 
 ```shell
 # Prepare clusters (they are mandatory for cosigt > v0.1.0)
-Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $dir_base/odgi/chopped.similarity.tsv $dir_base/odgi/chopped.similarity.clusters.json
+Rscript /moosefs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $dir_base/odgi/chopped.similarity.tsv $dir_base/odgi/chopped.similarity.clusters.json
 
 ROI_BED=$dir_base/roi/roi.bed
 REFERENCE_CRAM_FASTA=$dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa
@@ -194,11 +179,11 @@ grep skipping slurm-** -c | cut -f 2 -d ':' | uniq -c
 #### Assemblies vs reference
 
 ```shell
-conda activate /lizardfs/guarracino/condatools/minimap2/2.28
+conda activate /moosefs/guarracino/condatools/minimap2/2.28
 
 mkdir -p $dir_base/minimap2
 cd $dir_base/minimap2
-ls /lizardfs/guarracino/pangenomes/HGSVC3/*.fa.gz | while read fasta; do
+ls /moosefs/pangenomes/HGSVC3/*.fa.gz | while read fasta; do
     sample=$(basename $fasta .fa.gz)
 
     sbatch -p allnodes -c 24 --job-name $sample-vs-grch38 --wrap "hostname; cd /scratch; minimap2 -x asm20 --eqx -c -t 24 $dir_base/reference/GRCh38.fa.gz $fasta | bgzip -l 9 -@ 4 > $dir_base/minimap2/$sample-vs-grch38.paf.gz"
@@ -213,25 +198,37 @@ conda deactivate
 mkdir -p $dir_base/regions_of_interest
 cat $dir_base/data/loci.bed | while read -r chrom start end name; do echo -e "$chrom\t$start\t$end\t$name" > $dir_base/regions_of_interest/$name.bed; done
 
-#cat /lizardfs/guarracino/genotypify/data/loci/tableS1_locityper_paper.bed | grep HLA | cut -f 1-4 | while read -r chrom start end name; do echo -e "$chrom\t$start\t$end\t$name" > $dir_base/regions_of_interest/$name.bed; done
-# echo -e "chr6\t31972057\t32055418\tC4" > $dir_base/regions_of_interest/C4.bed
-# echo -e "chr22\t42077656\t42253758\tCYP2D6" > $dir_base/regions_of_interest/CYP2D6.bed
-# echo -e "chr16\t70801860\t71230722\tHYDIN" > $dir_base/regions_of_interest/HYDIN.bed
-# echo -e "chr2\t88691673\t88750929\tRPIA" > $dir_base/regions_of_interest/RPIA.bed
-# echo -e "chr7\t141963337\t142192359\tMGAM" > $dir_base/regions_of_interest/MGAM.bed
-# echo -e "chr20\t14638177\t14962407\tMACROD2" > $dir_base/regions_of_interest/MACROD2.bed
-# echo -e "chr16\t83532778\t83743290\tCDH13" > $dir_base/regions_of_interest/CDH13.bed
-# echo -e "chr1\t155089880\t155330966\tMTX1" > $dir_base/regions_of_interest/MTX1.bed
+#cat /moosefs/guarracino/genotypify/data/loci/tableS1_locityper_paper.bed | grep HLA | cut -f 1-4 | while read -r chrom start end name; do echo -e "$chrom\t$start\t$end\t$name" > $dir_base/regions_of_interest/$name.bed; done
+echo -e "chr6\t31972057\t32055418\tC4" > $dir_base/regions_of_interest/C4.bed
+echo -e "chr22\t42077656\t42253758\tCYP2D6" > $dir_base/regions_of_interest/CYP2D6.bed
+echo -e "chr16\t70801860\t71230722\tHYDIN" > $dir_base/regions_of_interest/HYDIN.bed
+echo -e "chr2\t88691673\t88750929\tRPIA" > $dir_base/regions_of_interest/RPIA.bed
+echo -e "chr7\t141963337\t142192359\tMGAM" > $dir_base/regions_of_interest/MGAM.bed
+echo -e "chr20\t14638177\t14962407\tMACROD2" > $dir_base/regions_of_interest/MACROD2.bed
+#echo -e "chr16\t83532778\t83743290\tCDH13" > $dir_base/regions_of_interest/CDH13.bed
+echo -e "chr1\t155089880\t155330966\tMTX1" > $dir_base/regions_of_interest/MTX1.bed
 # #echo -e "chr8\t43199245\t43428244\tPOTEA" > $dir_base/regions_of_interest/POTEA.bed # BROKEN LOCUS
-# echo -e "chr10\t133331967\t133667386\tCYP2E1" > $dir_base/regions_of_interest/CYP2E1.bed
+echo -e "chr10\t133331967\t133667386\tCYP2E1" > $dir_base/regions_of_interest/CYP2E1.bed
 echo -e "chr1\t103304997\t103901127\tAMY_andrea" > $dir_base/regions_of_interest/AMY_andrea.bed
-echo -e "chr1\t103511079\t103832645\tAMY1A_SV_list" > $dir_base/regions_of_interest/AMY1A_SV_list.bed
-echo -e "chr1\t103456064\t103863972\tAMY_davide" > $dir_base/regions_of_interest/AMY_davide.bed
+#echo -e "chr1\t103511079\t103832645\tAMY1A_SV_list" > $dir_base/regions_of_interest/AMY1A_SV_list.bed
+#echo -e "chr1\t103456064\t103863972\tAMY_davide" > $dir_base/regions_of_interest/AMY_davide.bed
 echo -e "chr15\t82245249\t82528509\tGOLGA6L10" > $dir_base/regions_of_interest/GOLGA6L10.bed
 #echo -e "chr15\t84069272\t84348216\tGOLGA6L4" > $dir_base/regions_of_interest/GOLGA6L4.bed
-echo -e "chr15\t84029272\t84388216\tGOLGA6L4_ref" > $dir_base/regions_of_interest/GOLGA6L4-ref.bed
-echo -e "chr16\t76429\t86429\tMPG" > $dir_base/regions_of_interest/MPG.bed
-echo -e "chr16\t30748293\t30761591\tPHKG2" > $dir_base/regions_of_interest/PHKG2.bed
+
+#echo -e "chr16\t76429\t86429\tMPG" > $dir_base/regions_of_interest/MPG.bed
+#echo -e "chr16\t30748293\t30761591\tPHKG2" > $dir_base/regions_of_interest/PHKG2.bed
+
+#echo -e "chr15\t84029272\t84388216\tGOLGA6L4_ref" > $dir_base/regions_of_interest/GOLGA6L4-ref.bed
+#echo -e "chr15\t84069272\t84435516\tGOLGA6L4ref" > $dir_base/regions_of_interest/GOLGA6L4ref.bed
+#echo -e "chr15\t84069272\t84191353\tGOLGA6L4ref1" > $dir_base/regions_of_interest/GOLGA6L4ref1.bed
+#echo -e "chr15\t84191353\t84313434\tGOLGA6L4ref2" > $dir_base/regions_of_interest/GOLGA6L4ref2.bed
+#echo -e "chr15\t84313434\t84435516\tGOLGA6L4ref3" > $dir_base/regions_of_interest/GOLGA6L4ref3.bed
+
+#echo -e "chr5\t33974170\t34186479\tC1QTNF3" > $dir_base/regions_of_interest/C1QTNF3.bed
+#echo -e "chr15\t84069272\t84348216\tGOLGA6L4" > $dir_base/regions_of_interest/GOLGA6L4.bed
+#echo -e "chr15\t82245249\t82528509\tGOLGA6L10" > $dir_base/regions_of_interest/GOLGA6L10.bed
+#echo -e "chr15\t75174484\t75399054\tGOLGA6D" > $dir_base/regions_of_interest/GOLGA6D.bed
+
 
 # panplexity parameters
 w=100
@@ -254,19 +251,19 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     ls $dir_base/minimap2/*.paf.gz | grep -Ff <(ls $dir_base/cram/*.cram | while read f; do echo $(basename $f .final.cram); done) -w | while read paf; do
         sample=$(basename $paf .paf.gz)
 
-        impg query \
-            -p $paf \
+        impg query -v 0 \
+            -a $paf \
             -b $dir_base/regions_of_interest/$region2.bed
-    done > $dir_base/impg/$chrom/$region/$region.projected.bedpe
-    bedtools sort -i $dir_base/impg/$chrom/$region/$region.projected.bedpe | \
+    done | cut -f 1-10 | grep '#U#' -v > $dir_base/impg/$chrom/$region/$region.projected.bedpe
+    bedtools sort -i $dir_base/impg/$chrom/$region/$region.projected.bedpe \
         > $dir_base/impg/$chrom/$region/$region.impg.bedpe
     #    bedtools merge -d 200000 | grep '#U#' -v > $dir_base/impg/$chrom/$region/$region.merged.bed
 
-    bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/bedpe_merge.sh \
-        $dir_base/impg/$chrom/$region/$region.impg.bedpe \
+    bash /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/bedpe_merge.sh \
+        $dir_base/impg/$chrom/$region/$region.projected.bedpe \
         200000 \
         > $dir_base/impg/$chrom/$region/$region.merged.bed
-    bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/bedpe_filter.sh \
+    bash /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/bedpe_filter.sh \
         $dir_base/impg/$chrom/$region/$region.merged.bed \
         $region \
         1000 \
@@ -275,15 +272,15 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     (bedtools getfasta -fi $dir_base/reference/GRCh38.fa.gz -bed $dir_base/regions_of_interest/$region2.bed | sed 's/>chr/>GRCh38#0#chr/g';
     ls $dir_base/minimap2/*.paf.gz | grep -Ff <(ls $dir_base/cram/*.cram | while read f; do echo $(basename $f .final.cram); done) -w | while read paf; do
         sample=$(basename $paf "-vs-grch38.paf.gz")
-        fasta=/lizardfs/guarracino/pangenomes/HGSVC3/$sample.fa.gz
+        fasta=/moosefs/pangenomes/HGSVC3/$sample.fa.gz
 
         bedtools getfasta -fi $fasta -bed <(grep $sample -w $dir_base/impg/$chrom/$region/$region.merged.filtered.bed)
     done) | bgzip -@ 8 > $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
     samtools faidx $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
 
     ######################################################################################################
-    #conda activate /lizardfs/guarracino/condatools/bwa-mem2/2.2.1
-    bwa-mem2 index $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
+    #conda activate /moosefs/guarracino/condatools/bwa-mem2/2.2.1
+    /moosefs/guarracino/condatools/bwa-mem2/2.2.1/bin/bwa-mem2.avx index $dir_base/impg/$chrom/$region/$region.extracted.fa.gz
     ls $dir_base/cram/*cram | while read cram; do
         echo $cram
         sample=$(basename $cram .cram)
@@ -297,7 +294,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
             $cram | \
             samtools sort -n | \
             samtools fasta | \
-                bwa-mem2 mem -t 42 $dir_base/impg/$chrom/$region/$region.extracted.fa.gz - | \
+                /moosefs/guarracino/condatools/bwa-mem2/2.2.1/bin/bwa-mem2.avx mem -t 42 $dir_base/impg/$chrom/$region/$region.extracted.fa.gz - | \
                 samtools view -b -F 4 -@ 6 - \
                 > $dir_base/bwamem2/$sample/$chrom/$region/$region.realigned.bam
     done
@@ -375,7 +372,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
             --bam $dir_base/bwamem2/$sample/$chrom/$region/$region.realigned.bam | \
             gzip > $dir_base/gfainject/$sample/$chrom/$region.gaf.gz
     done
-
+done
     ls $dir_base/cram/*cram | while read cram; do
         echo $cram
         sample=$(basename $cram .cram)
@@ -387,6 +384,11 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
             --len-scale \
             --weight-queries | \
             gzip > $dir_base/gafpack/$sample/$chrom/$region.gafpack.gz
+        # gafpack \
+        #     --gfa $dir_base/odgi/view/$chrom/$region.gfa \
+        #     --gaf $dir_base/gfainject/$sample/$chrom/$region.gaf.gz \
+        #     --copy-number --ploidy 2 | \
+        #     gzip > $dir_base/gafpack/$sample/$chrom/$region.gafpack.gz
     done
 
     # First generate the similarity matrix using odgi
@@ -397,7 +399,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
   
     mkdir -p $dir_base/clusters/$chrom
     grep '^S' $dir_base/odgi/view/$chrom/$region.gfa | awk '{{print("node."$2,length($3))}}' OFS="\t" > $dir_base/odgi/view/$chrom/$region.node.length.tsv
-    Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/filter.r \
+    Rscript /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/filter.r \
         $dir_base/odgi/paths/matrix/$chrom/$region.paths_matrix.tsv.gz \
         $dir_base/odgi/view/$chrom/$region.node.length.tsv \
         no_filter \
@@ -405,7 +407,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     region_similarity=$(cut -f 3 $dir_base/odgi/paths/matrix/$chrom/$region.shared.tsv | tail -1)
 
     # Run the clustering script to generate the JSON
-    Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r \
+    Rscript /moosefs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r \
         $dir_base/odgi/dissimilarity/$chrom/$region.tsv \
         $dir_base/clusters/$chrom/$region.clusters.json \
         automatic \
@@ -431,7 +433,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     # }' > /scratch/cosigt/$region.mask
     panplexity -i $dir_base/odgi/view/$chrom/$region.gfa -w $w -k $k -t $t -d $d -m /scratch/cosigt/$region.mask -b /scratch/cosigt/$region.linguistic.bed -c /scratch/cosigt/$region.linguistic.csv
     
-    Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/coverage_outliers.r \
+    Rscript /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/coverage_outliers.r \
                 $dir_base/odgi/paths/matrix/$chrom/$region.paths_matrix.tsv.gz \
                 /scratch/cosigt/$region.final \
                 $dir_base/odgi/view/$chrom/$region.node.length.tsv \
@@ -464,7 +466,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     mkdir -p /scratch/benchmark/$chrom/$region
 
     # Step 1: Make TPR table
-    Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calc_tpr.r \
+    Rscript /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calc_tpr.r \
         $dir_base/odgi/dissimilarity/$chrom/$region.tsv \
         $dir_base/clusters/$chrom/$region.clusters.json \
         $dir_base/clusters/$chrom/$region.clusters.hapdist.tsv \
@@ -484,7 +486,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
 
     # Step 4: Prepare combinations for QV
     mkdir -p /scratch/benchmark/$chrom/$region/qv_prep
-    bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/prepare_qv.sh \
+    bash /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/prepare_qv.sh \
         /scratch/benchmark/$chrom/$region/tpr.tsv \
         /scratch/benchmark/$chrom/$region/$region.flip.fasta \
         /scratch/benchmark/$chrom/$region/qv_prep
@@ -494,7 +496,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     parallel -j 48 '
         sample=$(basename {})
         echo "Calculating QV for sample $sample"
-        bash /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calculate_qv.sh \
+        bash /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/calculate_qv.sh \
             {} \
             {}/qv.tsv
     '
@@ -503,7 +505,7 @@ ls $dir_base/regions_of_interest | cut -f 1 | cut -f 1 -d '.' | while read regio
     cat /scratch/benchmark/$chrom/$region/qv_prep/*/qv.tsv > /scratch/benchmark/$chrom/$region/bestqv.tsv
 
     # Step 7: Combine TPR and QV
-    Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/combine_tpr_qv.r \
+    Rscript /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/combine_tpr_qv.r \
         /scratch/benchmark/$chrom/$region/tpr.tsv \
         /scratch/benchmark/$chrom/$region/bestqv.tsv \
         $region \
@@ -512,7 +514,7 @@ done
 
 # Final step: Plot TPR results
 cat $dir_base/regions_of_interest/*.bed > tmp.bed
-Rscript /lizardfs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/plot_tpr.r \
+Rscript /moosefs/guarracino/tools_for_genotyping/cosigt/cosigt_smk/workflow/scripts/plot_tpr.r \
     /scratch/benchmark/tpr \
     tmp.bed \
     /scratch/benchmark/*/*/tpr_qv.tsv
@@ -533,8 +535,8 @@ rm /scratch/benchmark/*/*/*.fai
 # cd /scratch/random-grid-search
 # rm _random*.tsv ciao*
 # ls _random* -d | while read d; do echo $d; cat /scratch/random-grid-search/$d/benchmark/*/*/tpr_qv.tsv > $d.tsv; done
-# cat /lizardfs/guarracino/mempig/regions_of_interest/*.bed > tmp.bed
-# Rscript /lizardfs/guarracino/mempig/z4.R ciao tmp.bed $(ls *tsv | sort -V)
+# cat /moosefs/raid5/guarracino/mempig/regions_of_interest/*.bed > tmp.bed
+# Rscript /moosefs/raid5/guarracino/mempig/z4.R ciao tmp.bed $(ls *tsv | sort -V)
 ```
 
 ### 39 short read samples on the C4 region from the HPRCy1 pangenome
@@ -558,7 +560,7 @@ Run:
 
 ```shell
 # Prepare clusters (they are mandatory for cosigt > v0.1.0)
-Rscript /lizardfs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $dir_base/odgi/chopped.similarity.tsv $dir_base/odgi/chopped.similarity.clusters.json
+Rscript /moosefs/guarracino/git/cosigt/cosigt_smk/workflow/scripts/cluster.r $dir_base/odgi/chopped.similarity.tsv $dir_base/odgi/chopped.similarity.clusters.json
 
 ROI_BED=$dir_base/roi/roi.bed
 REFERENCE_CRAM_FASTA=$dir_base/reference/GRCh38_full_analysis_set_plus_decoy_hla.fa
